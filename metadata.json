@@ -1,0 +1,6 @@
+{
+  "name": "Board Sight",
+  "description": "PCB and hardware optical inspection dashboard for defect mapping, shift and batch yield analytics, and AI root cause insights.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
