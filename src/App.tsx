@@ -202,6 +202,29 @@ export default function App() {
     setAppliedFilters(resetFilters);
   }
 
+  function handleSelectBoardDesign(nextCode: string) {
+    const isSeededHistorical = nextCode === 'Model X12' || nextCode === 'Model Y9';
+    const shouldExpandPeriod =
+      !isSeededHistorical && appliedFilters.periodKey === 'may_1_20';
+
+    const nextFilters: DashboardFilters = {
+      ...appliedFilters,
+      boardModel: nextCode,
+      batchKey: 'ALL',
+      defectType: 'ALL',
+      operator: 'ALL',
+      ...(shouldExpandPeriod
+        ? {
+            periodKey: 'all_dates',
+            startDate: PERIOD_PRESETS.all_dates.startDate,
+            endDate: PERIOD_PRESETS.all_dates.endDate,
+          }
+        : {}),
+    };
+    setDraftFilters(nextFilters);
+    setAppliedFilters(nextFilters);
+  }
+
   async function handleExportCsv() {
     const qs = new URLSearchParams({
       startDate: appliedFilters.startDate,
@@ -542,9 +565,26 @@ export default function App() {
           <div className="flex flex-wrap items-center gap-3">
             {dashboard ? (
               <>
-                <h1 className="text-[18px] font-semibold text-[#111827] tracking-[-0.015em]">
-                  {dashboard.header.boardDisplayName}
-                </h1>
+                <div className="relative inline-flex items-center">
+                  <select
+                    aria-label="Active PCB Design"
+                    title="Switch PCB hardware design"
+                    value={dashboard.header.boardModelCode}
+                    onChange={(e) => handleSelectBoardDesign(e.target.value)}
+                    className="appearance-none bg-transparent hover:bg-[#F3F4F6] focus:bg-[#F3F4F6] border border-transparent hover:border-[#E5E7EB] focus:border-[#229A45] rounded-lg pl-2.5 pr-8 py-1 -ml-2.5 text-[18px] font-semibold text-[#111827] tracking-[-0.015em] cursor-pointer focus:outline-none transition-colors"
+                  >
+                    {dashboard.filterOptions.boardModels.map((m) => (
+                      <option
+                        key={m.id}
+                        value={m.code}
+                        className="text-[13px] font-medium text-[#111827] bg-white"
+                      >
+                        {m.displayName}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-[#6B7280] pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" />
+                </div>
                 <button
                   type="button"
                   disabled={!dashboard.header.latestInspectionId}
@@ -620,6 +660,8 @@ export default function App() {
           {activeNav === 'ingest' && dashboard && (
             <IngestionView
               boardModels={dashboard.filterOptions.boardModels}
+              selectedBoardModel={appliedFilters.boardModel}
+              onBoardModelChange={handleSelectBoardDesign}
               operatorName={user.name}
               onIngestionSuccess={(ingestedModelCode) => {
                 const expanded: DashboardFilters = {

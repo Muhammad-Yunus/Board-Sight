@@ -16,6 +16,8 @@ import type { BoardModelOption } from '../types/boardsight.ts';
 
 interface IngestionViewProps {
   boardModels: BoardModelOption[];
+  selectedBoardModel?: string;
+  onBoardModelChange?: (boardModelCode: string) => void;
   operatorName: string;
   onIngestionSuccess: (
     boardModelCode: string,
@@ -57,6 +59,8 @@ const DEFECT_TYPES = [
 
 export function IngestionView({
   boardModels,
+  selectedBoardModel,
+  onBoardModelChange,
   operatorName,
   onIngestionSuccess,
 }: IngestionViewProps) {
@@ -65,7 +69,7 @@ export function IngestionView({
   // Structured manual inspection state
   const [serialNumber, setSerialNumber] = useState('');
   const [boardModelCode, setBoardModelCode] = useState(
-    boardModels[0]?.code || 'Model X12'
+    selectedBoardModel || boardModels[0]?.code || 'Model X12'
   );
   const [batchCode, setBatchCode] = useState('');
   const [shift, setShift] = useState('A');
@@ -107,10 +111,17 @@ export function IngestionView({
     boardModels.find((m) => m.code === boardModelCode) || boardModels[0];
 
   useEffect(() => {
-    if (boardModels.length > 0 && !boardModels.some((m) => m.code === boardModelCode)) {
-      setBoardModelCode(boardModels[0].code);
+    if (selectedBoardModel && boardModels.some((m) => m.code === selectedBoardModel)) {
+      setBoardModelCode(selectedBoardModel);
+      return;
     }
-  }, [boardModels, boardModelCode]);
+    setBoardModelCode((prev) => {
+      if (boardModels.length > 0 && !boardModels.some((m) => m.code === prev)) {
+        return boardModels[0].code;
+      }
+      return prev;
+    });
+  }, [boardModels, selectedBoardModel]);
 
   useEffect(() => {
     if (tab !== 'webhook') return;
@@ -451,7 +462,11 @@ export function IngestionView({
                 </label>
                 <select
                   value={boardModelCode}
-                  onChange={(e) => setBoardModelCode(e.target.value)}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setBoardModelCode(next);
+                    onBoardModelChange?.(next);
+                  }}
                   className="w-full px-3 py-2 text-[12.5px] border border-[#E5E7EB] rounded-lg bg-white focus:outline-none focus:border-[#229A45]"
                 >
                   {boardModels.map((m) => (
